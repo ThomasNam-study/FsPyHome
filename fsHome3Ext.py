@@ -1,0 +1,3 @@
+print(all([]))
+print(any([]))
+
