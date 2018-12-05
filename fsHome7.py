@@ -1,3 +1,5 @@
+import random
+
 # 1. __call__ : 인스턴스 자체를 호출가능하게 할 수 있다.
 # 2. __len__ : 클래스 안에 컬랙션형 데이터가 존재할 때 len 함수로 수를 구하게 할 수 있다.
 # 3. __contains__ : in 절을 이용하여 데이터를 존재하는지 확인 가능하다.
@@ -48,23 +50,51 @@ class Wallet:
         self.money += m
         self.print_now_money()
 
+# 은행 클래스
+class Bank:
+    name = ""
+    phone = ""      # 은행 대표번호
+    pattern = ""    # 계좌 번호 생성 패턴
+
+    def __init__(self, name, phone, pattern):
+        self.name = name
+        self.phone = phone
+        self.pattern = pattern
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    # 계좌 번호 랜덤 생성
+    def make_account_number(self):
+        accountNum = ""
+        for p in self.pattern:
+            if p == "x":
+                accountNum += str(random.randint(0, 9))
+            else:
+                accountNum += p
+
+        return accountNum
 
 class Account(Wallet):
-    bank_name = ""
+    bank = None
     account_number = ""
     passwd = ""
 
-    def __init__(self, name, bank_name, account_number, passwd):
+    def __init__(self, name, bank, passwd):
         super().__init__(name)
-        self.account_number = account_number
-        self.bank_name = bank_name
+        self.account_number = bank.make_account_number()
+        self.bank = bank
         self.passwd = passwd
 
     def __str__(self):
-        return "{}의 계좌입니다. 계좌번호 : {}".format(self.owner, self.account_number)
+        return "{}의 계좌입니다. {} 계좌번호 : {}".format(self.owner, self.bank.name, self.account_number)
 
+    # 소유자가 같은 경우면 + 시킨다.
     def __add__(self, other):
-        return self.money + other.money
+        if self.owner == other.owner:
+            return self.money + other.money
+        else:
+            return self.money
 
     # 인스턴스를 직접 호출한다.
     def __call__(self, *args, **kwargs):
@@ -82,21 +112,47 @@ class Account(Wallet):
     def send_money(self, money, to, passwd):
 
         if self.passwd != passwd:
-            print("패스워드가 다릅니다.")
+            print("패스워드가 다릅니다. - 고객문의 센터 - " + self.bank.phone)
             return
 
-        if self.money > money:
+        sameBank = self.bank == to.bank
+
+        # 송금 수수료
+        fee = 0
+
+        if not sameBank:
+            fee = 500
+
+        if self.money > money + fee:
             to.money += money
-            self.money -= money
-            print("{}원을 {}에게 보냈습니다.".format(money, to.owner))
+            self.money -= money + fee
+            print("{}원을 {}에게 보냈습니다. - 수수료 : {}원".format(money, to.owner, fee))
             self.print_now_money()
+        else:
+            print("잔액이 부족합니다 - 고객문의 센터 - " + self.bank.phone)
 
 
-namAccount = Account("NAM2", "국민은행", "204-01-0442-1111", "1234")
-namAccount1 = Account("NAM2", "국민은행", "204-01-0442-1112", "1234")
-namAccount2 = Account("NAM2", "신한은행", "404-01-0442-1112", "1234")
+kb = Bank("국민은행", "02-1234-1234", 'xxx-xxxx-xx-xx')
+shinhan = Bank("신한은행", "02-4242-1234", 'xxx-xx-xxxx-xxxx')
 
-suzyAccount1 = Account("SUZY", "국민은행", "204-01-0542-1112", "1234")
-suzyAccount2 = Account("SUZY", "신한은행", "404-01-0542-1115", "1234")
 
-print(namAccount != suzyAccount2)
+namAccount = Account("NAM2", kb, "1234")
+namAccount1 = Account("NAM2", kb, "1234")
+namAccount2 = Account("NAM2", shinhan, "1234")
+
+suzyAccount1 = Account("SUZY", kb, "1234")
+suzyAccount2 = Account("SUZY", shinhan, "1234")
+
+print(namAccount)
+print(namAccount2)
+
+namAccount.income(50000)
+namAccount1.income(150000)
+namAccount.send_money(10000, suzyAccount1, "1212")
+namAccount.send_money(10000, suzyAccount1, "1234")
+namAccount.send_money(10000, suzyAccount2, "1234")
+
+
+print("합산1 : {}".format(namAccount + suzyAccount1))
+print("합산2 : {}".format(namAccount + namAccount1))
+
