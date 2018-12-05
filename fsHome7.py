@@ -50,10 +50,15 @@ class Wallet:
 
 
 class Account(Wallet):
+    bank_name = ""
+    account_number = ""
+    passwd = ""
 
-    def __init__(self, name, account_number):
+    def __init__(self, name, bank_name, account_number, passwd):
         super().__init__(name)
         self.account_number = account_number
+        self.bank_name = bank_name
+        self.passwd = passwd
 
     def __str__(self):
         return "{}의 계좌입니다. 계좌번호 : {}".format(self.owner, self.account_number)
@@ -65,10 +70,21 @@ class Account(Wallet):
     def __call__(self, *args, **kwargs):
         print("호출되었습니다")
 
+    def __eq__(self, other):
+        return self.owner == other.owner
+
+    def __ne__(self, other):
+        return self.owner != other.owner
+
     def print_account_number(self):
         print("계좌 번호는 {} 입니다.".format(self.account_number))
 
-    def send_money(self, money, to):
+    def send_money(self, money, to, passwd):
+
+        if self.passwd != passwd:
+            print("패스워드가 다릅니다.")
+            return
+
         if self.money > money:
             to.money += money
             self.money -= money
@@ -76,3 +92,11 @@ class Account(Wallet):
             self.print_now_money()
 
 
+namAccount = Account("NAM2", "국민은행", "204-01-0442-1111", "1234")
+namAccount1 = Account("NAM2", "국민은행", "204-01-0442-1112", "1234")
+namAccount2 = Account("NAM2", "신한은행", "404-01-0442-1112", "1234")
+
+suzyAccount1 = Account("SUZY", "국민은행", "204-01-0542-1112", "1234")
+suzyAccount2 = Account("SUZY", "신한은행", "404-01-0542-1115", "1234")
+
+print(namAccount != suzyAccount2)
